@@ -176,7 +176,7 @@ DJANGO-Earthquake-Project/
 
 ---
 
-# 🌐 Src/collectors/
+# 🌐 Src/Data Collection/
 
 ## مسئولیت:
 
@@ -422,7 +422,7 @@ Magnitude و Depth
 
 ---
 
-## indexe.sql
+## index.sql
 
 ایجاد Index برای افزایش سرعت Query ها.
 
