@@ -38,7 +38,7 @@ Final Report
 # 📁 ساختار کلی پروژه
 
 ```
-japan-earthquake-analysis/
+DJANGO-Earthquake-Project/
 
 ├── README.md
 ├── requirements.txt
