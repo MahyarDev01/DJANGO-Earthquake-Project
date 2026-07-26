@@ -160,11 +160,11 @@ DJANGO-Earthquake-Project/
 
 ---
 
-# 📤 Data/Final/
+# 📤 Data/Final CSV/
 
 خروجی نهایی تحلیل‌ها.
 
-## final_analysis.csv
+## final.csv
 
 نتایج نهایی تحلیل‌های آماری.
 
