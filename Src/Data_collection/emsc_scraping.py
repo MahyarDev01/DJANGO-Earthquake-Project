@@ -1,4 +1,3 @@
-import os
 from selenium import webdriver
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
@@ -9,6 +8,9 @@ from selenium.webdriver.firefox.options import Options
 from datetime import date, datetime, timedelta
 from bs4 import BeautifulSoup
 import pandas as pd
+from configs import JAPAN_EMSC_CSV
+
+# run it from project root with: python -m Src.Data_collection.emsc_scraping 
 
 
 #filling filters textboxes
@@ -91,14 +93,10 @@ def emsc_data_earthquake_scrape(date_start:date, date_end:date, latitude_min:int
             try:
                 #finding current page
                 current_page = driver.find_element(By.CSS_SELECTOR, "div.pag.selview").text
-            except NoSuchElementException:
-                break  
-
-            try:
-                #clicking on the next page button
+                #finding next page button
                 next_btn = driver.find_element(By.CSS_SELECTOR, "div.pag.spes.spes1")
             except NoSuchElementException:
-                break
+                break  
 
             #checking if the page is the last page breaks loop
             if "oldpag" in next_btn.get_attribute("class"):
@@ -111,11 +109,9 @@ def emsc_data_earthquake_scrape(date_start:date, date_end:date, latitude_min:int
                 lambda d: d.find_element(By.CSS_SELECTOR, "div.pag.selview").text != current_page
             )
             
-        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-        PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, "..", ".."))
-        csv_path = os.path.join(PROJECT_ROOT, "Data", "CSV", "JAPAN_EMSC.csv")
+
         df = pd.DataFrame(all_data)
-        df.to_csv(csv_path, index=False, encoding="utf-8-sig")
+        df.to_csv(JAPAN_EMSC_CSV, index=False, encoding="utf-8-sig")
 
         return True
     
@@ -125,6 +121,10 @@ def emsc_data_earthquake_scrape(date_start:date, date_end:date, latitude_min:int
 
     except TimeoutException as e:
         print("timeout")
+        return False
+
+    except:
+        print("an error ocurred, Try again...")
         return False
 
     finally:
