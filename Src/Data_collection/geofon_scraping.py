@@ -110,7 +110,7 @@ def geofon_data_earthquake_scrape(date_start:date, date_end:date, latitude_min:i
         print('an error ocurred, Try again...')
         return False
 
-def emsc_japan_lastmonth():
+def geofon_japan_lastmonth():
     end_date = datetime.today().date() 
     start_date = end_date - timedelta(days=30)
 
@@ -120,7 +120,7 @@ def emsc_japan_lastmonth():
 
 if __name__ == '__main__':
 
-    if emsc_japan_lastmonth():
+    if geofon_japan_lastmonth():
         
         print("DONE!")
 
