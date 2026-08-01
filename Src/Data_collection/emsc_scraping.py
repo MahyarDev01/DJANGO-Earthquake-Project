@@ -1,3 +1,6 @@
+import os
+import platform
+import shutil
 from selenium import webdriver
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
@@ -8,10 +11,58 @@ from selenium.webdriver.firefox.options import Options
 from datetime import date, datetime, timedelta
 from bs4 import BeautifulSoup
 import pandas as pd
-from configs import JAPAN_EMSC_CSV
+from configs import JAPAN_EMSC_CSV, FIREFOX_BINARY
 
 # run it from project root with: python -m Src.Data_collection.emsc_scraping 
 
+# common install locations to check per os
+CANDIDATE_PATHS = {
+    "Windows": [
+        r"C:\Program Files\Mozilla Firefox\firefox.exe",
+        r"C:\Program Files (x86)\Mozilla Firefox\firefox.exe",
+    ],
+    "Linux": [
+        "/usr/bin/firefox",
+        "/snap/firefox/current/usr/lib/firefox/firefox",
+        "/usr/lib/firefox/firefox",
+        "/opt/firefox/firefox",
+    ],
+    "Darwin": [
+        "/Applications/Firefox.app/Contents/MacOS/firefox",
+    ],
+}
+
+
+def find_firefox_binary():
+
+    # checks if there is a path for FIREFOX_BINARY in configs.py
+    if FIREFOX_BINARY and os.path.exists(FIREFOX_BINARY):
+        return FIREFOX_BINARY
+
+
+    for path in CANDIDATE_PATHS.get(platform.system(), []):
+        if os.path.exists(path):
+            return path
+
+
+    on_path = shutil.which("firefox") or shutil.which("firefox.exe")
+    if on_path:
+        return on_path
+
+
+    return None
+
+
+def build_firefox_options(show_browser=False):
+    options = Options()
+    if not show_browser:
+        options.add_argument("--headless")
+
+    binary_path = find_firefox_binary()
+    if binary_path:
+        options.binary_location = binary_path
+
+    return options
 
 #filling filters textboxes
 def fill_filters(wait, css_selector, value, clamp_to_max=False):
@@ -32,9 +83,7 @@ def fill_filters(wait, css_selector, value, clamp_to_max=False):
 
 def emsc_data_earthquake_scrape(date_start:date, date_end:date, latitude_min:int, latitude_max:int, longitude_min:int, longitude_max:int, magnitude_min:int = 1, magnitude_max:int = None):
 
-    options = Options()
-    options.add_argument("--headless")
-
+    options = options = build_firefox_options(show_browser=False)
     driver = webdriver.Firefox(options=options)
     wait = WebDriverWait(driver, 20)
     url = "https://www.emsc.eu/Earthquake_information/"

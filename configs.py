@@ -11,3 +11,5 @@ JAPAN_EMSC_CSV = os.path.join(CSV_DIR, "JAPAN_EMSC.csv")
 JAPAN_DATASET_CSV = os.path.join(CSV_DIR, "JAPAN_DATASET.csv")
 JAPAN_GEOFON_CSV = os.path.join(CSV_DIR, "JAPAN_GEOFON.csv")
 JAPAN_USGS_CSV = os.path.join(CSV_DIR, "JAPAN_USGS.csv")
+
+FIREFOX_BINARY = None
