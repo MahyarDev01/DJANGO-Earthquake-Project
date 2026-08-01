@@ -11,4 +11,4 @@ JAPAN_DATASET_CSV = os.path.join(CSV_DIR, "JAPAN_DATASET.csv")
 JAPAN_GEOFON_CSV = os.path.join(CSV_DIR, "JAPAN_GEOFON.csv")
 JAPAN_USGS_CSV = os.path.join(CSV_DIR, "JAPAN_USGS.csv")
 
-SCHEMA_SQL = os.path.join(SQL_DIR, "create_schema.sql") 
+SCHEMA_SQL = os.path.join(SQL_DIR, "create_schema.sql")
