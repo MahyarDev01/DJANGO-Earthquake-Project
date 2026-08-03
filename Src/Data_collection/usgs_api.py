@@ -38,7 +38,7 @@ def collect_usgs_data():
         params = build_params()
         response = download_usgs_data(params)
         save_csv(response, JAPAN_USGS_CSV)
-        print("USGS Done !!")
+        print(" USGS Done! ")
 
 if __name__ == '__main__':
      collect_usgs_data()
