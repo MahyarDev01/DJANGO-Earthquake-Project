@@ -80,18 +80,16 @@ class TestEMSCSCRAPING(unittest.TestCase):
         end_date = datetime.today().date()
         start_date = end_date - timedelta(days = 30)
 
-        result = emsc_scraping.emsc_data_earthquake_scrape(end_date,
-                                                           start_date,
-                                                           24,
-                                                           46,
-                                                           123,
-                                                           146,
-                                                           1)
+        # اصلاح: اول start_date و بعد end_date
+        result = emsc_scraping.emsc_data_earthquake_scrape(
+            start_date, 
+            end_date, 
+            24, 46, 123, 146, 1
+        )
         self.assertTrue(result)
         self.assertTrue(os.path.exists(JAPAN_EMSC_CSV))
 
         df = pd.read_csv(JAPAN_EMSC_CSV)
-
         self.assertGreater(len(df),0)
 
         self.assertIn('date' , df.columns)
@@ -101,6 +99,6 @@ class TestEMSCSCRAPING(unittest.TestCase):
         self.assertIn('magtype' , df.columns)
         self.assertIn('region' , df.columns)
         self.assertIn('depth' , df.columns)
-
+        
 if __name__ == "__main__":
     unittest.main()
