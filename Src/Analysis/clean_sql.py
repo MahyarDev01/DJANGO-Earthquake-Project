@@ -1,13 +1,13 @@
 import os
 import sys
 
-# تنظیم مسیر برای دسترسی به ماژول‌های دایرکتوری‌های دیگر (دقیقاً مشابه روش خودت)
+# تنظیم مسیر برای دسترسی به ماژول‌های دایرکتوری‌های دیگر
 current_dir = os.path.dirname(os.path.abspath(__file__)) 
 src_dir = os.path.dirname(current_dir) 
 project_root = os.path.dirname(src_dir) 
 sys.path.append(project_root)
 
-# ایمپورت کردن کانتکست منیجر دیتابیس که قبلاً نوشتی
+# ایمپورت کردن کانتکست منیجر دیتابیس
 from Src.Database.db_connection import db_cursor
 
 def task3_report_table_structure():
@@ -20,11 +20,9 @@ def task3_report_table_structure():
     
     try:
         with db_cursor() as cur:
-            # ۱. دریافت تعداد کل رکوردهای جدول
             cur.execute("SELECT COUNT(*) FROM earthquakes;")
             total_rows = cur.fetchone()[0]
             
-            # ۲. دریافت اطلاعات ستون‌ها (نام ستون و نوع داده) از اسکیما
             cur.execute("""
                 SELECT column_name, data_type 
                 FROM information_schema.columns 
@@ -33,7 +31,6 @@ def task3_report_table_structure():
             columns_info = cur.fetchall()
             total_columns = len(columns_info)
             
-            # چاپ گزارش
             print(f"📊 Total Rows: {total_rows}")
             print(f"📊 Total Columns: {total_columns}\n")
             print("📋 Columns Detail:")
@@ -54,7 +51,6 @@ def task4_handle_null_values():
     
     try:
         with db_cursor() as cur:
-            # ۱. شناسایی مقادیر گمشده (بررسی NULL یا رشته خالی)
             check_query = """
                 SELECT 
                     SUM(CASE WHEN magnitude IS NULL OR magnitude = '' THEN 1 ELSE 0 END),
@@ -76,7 +72,6 @@ def task4_handle_null_values():
             print(f"  - Time:      {missing_report[4]}")
             print(f"  - Place:     {missing_report[5]}\n")
             
-            # ۲. حذف رکوردهایی که داده‌های حیاتی آن‌ها نامعتبر است
             delete_query = """
                 DELETE FROM earthquakes
                 WHERE magnitude IS NULL OR magnitude = ''
@@ -87,9 +82,8 @@ def task4_handle_null_values():
             """
             cur.execute(delete_query)
             deleted_rows = cur.rowcount
-            print(f"🗑️ Deleted {deleted_rows} rows with missing critical data (magnitude, depth, coords, time).")
+            print(f"🗑️ Deleted {deleted_rows} rows with missing critical data.")
             
-            # ۳. جایگذاری مقدار مناسب برای فیلد place (در صورت خالی بودن)
             update_query = """
                 UPDATE earthquakes
                 SET place = 'Unknown'
@@ -107,7 +101,6 @@ def task4_handle_null_values():
 def task5_remove_duplicates():
     """
     تسک ۵: شناسایی داده‌های تکراری و حذف آن‌ها 
-    تا هر زلزله تنها یک بار در جدول ثبت شده باشد.
     """
     print("\n" + "="*50)
     print("🧹 Task 5: Removing Duplicate Records")
@@ -115,7 +108,6 @@ def task5_remove_duplicates():
     
     try:
         with db_cursor() as cur:
-            # ۱. بررسی اینکه چند گروه دیتای تکراری داریم (اختیاری جهت گزارش‌گیری)
             check_duplicates_query = """
                 SELECT COUNT(*) 
                 FROM (
@@ -128,7 +120,6 @@ def task5_remove_duplicates():
             cur.execute(check_duplicates_query)
             duplicate_groups = cur.fetchone()[0]
             
-            # ۲. حذف رکوردهای تکراری با نگه داشتن کمترین id برای هر رویداد یکتا
             delete_query = """
                 DELETE FROM earthquakes
                 WHERE id NOT IN (
@@ -152,23 +143,34 @@ def task5_remove_duplicates():
         
 def task6_convert_data_types():
     """
-    تسک ۶: تبدیل نوع داده ستون‌های magnitude و depth به FLOAT 
-    و ستون time به TIMESTAMP (معادل DATETIME در PostgreSQL)
+    تسک ۶: پاکسازی حرفه‌ای داده‌های خراب با Regex و تبدیل نوع داده‌ها
     """
     print("\n" + "="*50)
-    print("🔄 Task 6: Converting Data Types")
+    print("🔄 Task 6: Cleaning Invalid Data & Converting Data Types")
     print("="*50)
     
     try:
         with db_cursor() as cur:
-            # ۱. اول داده‌های کثیف ستون time را تمیز می‌کنیم (نگه داشتن ۱۹ کاراکتر اول)
-            clean_time_query = """
-                UPDATE earthquakes
-                SET time = LEFT(time, 19);
+            # ۱. پیش‌پردازش و فیلتر داده‌های کاملاً نامعتبر (جلوگیری از ارور دیتابیس)
+            clean_garbage_data = """
+                -- اصلاح مقادیر حروفی خاص به عدد (مثال: تبدیل 문자 به عدد)
+                UPDATE earthquakes SET magnitude = '4.9' WHERE magnitude = 'four.nine';
+                
+                -- حذف رکوردهایی که زمان آن‌ها فرمت تاریخ ندارند (مثل عبارات min ago)
+                -- این Regex چک می‌کند که متن حتماً با YYYY-MM-DD شروع شود
+                DELETE FROM earthquakes WHERE time !~ '^\d{4}-\d{2}-\d{2}';
+                
+                -- استانداردسازی زمان: حذف T و بریدن کاراکترهای اضافی
+                UPDATE earthquakes SET time = REPLACE(LEFT(time, 19), 'T', ' ');
+                
+                -- حذف رکوردهایی که فیلدهای عددی آن‌ها حاوی کاراکتر غیرمجاز است
+                DELETE FROM earthquakes WHERE magnitude !~ '^-?[0-9]*\.?[0-9]+$';
+                DELETE FROM earthquakes WHERE depth !~ '^-?[0-9]*\.?[0-9]+$';
             """
-            cur.execute(clean_time_query)
+            cur.execute(clean_garbage_data)
+            print("✅ Malformed strings and invalid timestamp formats handled successfully.")
             
-            # ۲. حالا که دیتای زمان استاندارد شد، نوع ستون‌ها را تغییر می‌دهیم
+            # ۲. حالا که دیتای متنی کاملاً استاندارد شد، نوع ستون‌ها را با خیال راحت تغییر می‌دهیم
             alter_query = """
                 ALTER TABLE earthquakes
                 ALTER COLUMN magnitude TYPE FLOAT USING magnitude::double precision,
@@ -192,14 +194,12 @@ def task7_extract_month():
     
     try:
         with db_cursor() as cur:
-            # ۱. ایجاد ستون month از نوع عدد صحیح (اگر از قبل وجود نداشته باشد)
             add_col_query = """
                 ALTER TABLE earthquakes 
                 ADD COLUMN IF NOT EXISTS month INTEGER;
             """
             cur.execute(add_col_query)
             
-            # ۲. استخراج ماه از ستون time و ذخیره آن در ستون month
             update_query = """
                 UPDATE earthquakes
                 SET month = EXTRACT(MONTH FROM time);
@@ -222,14 +222,12 @@ def task8_categorize_magnitude():
     
     try:
         with db_cursor() as cur:
-            # ۱. اضافه کردن ستون category
             add_col_query = """
                 ALTER TABLE earthquakes 
                 ADD COLUMN IF NOT EXISTS category VARCHAR(50);
             """
             cur.execute(add_col_query)
             
-            # ۲. به‌روزرسانی ستون با استفاده از شروط (CASE WHEN)
             update_query = """
                 UPDATE earthquakes
                 SET category = CASE
@@ -256,50 +254,12 @@ def task9_extract_region():
     
     try:
         with db_cursor() as cur:
-            # ۱. اضافه کردن ستون region (اگر وجود نداشته باشد)
             add_col_query = """
                 ALTER TABLE earthquakes 
                 ADD COLUMN IF NOT EXISTS region VARCHAR(255);
             """
             cur.execute(add_col_query)
             
-            # ۲. استخراج منطقه با استفاده از توابع رشته‌ای PostgreSQL
-            # از SPLIT_PART استفاده می‌کنیم تا متن بعد از کاما را بگیریم
-            update_query = """
-                UPDATE earthquakes
-                SET region = CASE
-                    WHEN place LIKE '%, %' THEN TRIM(SPLIT_PART(place, ', ', 2))
-                    WHEN place LIKE '%,%' THEN TRIM(SPLIT_PART(place, ',', 2))
-                    ELSE TRIM(place)
-                END;
-            """
-            cur.execute(update_query)
-            updated_rows = cur.rowcount
-            print(f"✅ Column 'region' created and populated successfully for {updated_rows} rows.")
-            
-    except Exception as e:
-        print(f"❌ Error in Task 9: {e}")
-        
-        
-def task9_extract_region():
-    """
-    تسک ۹: ایجاد ستون region و استخراج نام منطقه از ستون place
-    """
-    print("\n" + "="*50)
-    print("🌍 Task 9: Extracting Region from Place")
-    print("="*50)
-    
-    try:
-        with db_cursor() as cur:
-            # ۱. اضافه کردن ستون region (اگر وجود نداشته باشد)
-            add_col_query = """
-                ALTER TABLE earthquakes 
-                ADD COLUMN IF NOT EXISTS region VARCHAR(255);
-            """
-            cur.execute(add_col_query)
-            
-            # ۲. استخراج منطقه با استفاده از توابع رشته‌ای PostgreSQL
-            # از SPLIT_PART استفاده می‌کنیم تا متن بعد از کاما را بگیریم
             update_query = """
                 UPDATE earthquakes
                 SET region = CASE
@@ -326,7 +286,6 @@ def task10_count_by_month():
     
     try:
         with db_cursor() as cur:
-            # کوئری برای شمارش زلزله‌ها در هر ماه
             query = """
                 SELECT month, COUNT(*) as total_count
                 FROM earthquakes
