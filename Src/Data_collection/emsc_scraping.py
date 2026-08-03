@@ -1,6 +1,7 @@
 import os
 import platform
 import shutil
+import sys
 from selenium import webdriver
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
@@ -11,6 +12,12 @@ from selenium.webdriver.firefox.options import Options
 from datetime import date, datetime, timedelta
 from bs4 import BeautifulSoup
 import pandas as pd
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+src_dir = os.path.dirname(current_dir)
+project_root = os.path.dirname(src_dir)
+sys.path.append(project_root)
+
 from configs import JAPAN_EMSC_CSV, FIREFOX_BINARY
 
 
@@ -176,6 +183,7 @@ def emsc_data_earthquake_scrape(date_start:date, date_end:date, latitude_min:int
 def emsc_japan_lastmonth():
     end_date = datetime.today().date() 
     start_date = end_date - timedelta(days=30)
+    print(" EMSC DONE! ")
 
     return emsc_data_earthquake_scrape(start_date, end_date, 24, 46, 123, 146, 1)
 
