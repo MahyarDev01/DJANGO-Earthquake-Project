@@ -1,4 +1,3 @@
-# db_connection.py
 import psycopg2
 from sqlalchemy import create_engine
 from decouple import config
@@ -6,8 +5,6 @@ from urllib.parse import quote_plus
 from contextlib import contextmanager
 
 
-# create '.env' file in project root and add your DB_PASSWORD in that 
-# DB_PASSWORD = your password
 
 
 
@@ -19,7 +16,7 @@ DB_PORT = "5432"
 def create_database_if_not_exists():
 
     conn = psycopg2.connect(
-        dbname="postgres",   # connect to the default admin DB, not DB_NAME
+        dbname="postgres",
         user=DB_USER,
         password=config("DB_PASSWORD"),
         host=DB_HOST,
@@ -62,13 +59,6 @@ def get_engine():
 
 @contextmanager
 def db_cursor():
-    """
-    yields a cursor from a fresh connection and automatically commits on success
-    or rolls back on error, always closing the cursor and connection
-    afterward in any state.
- 
-    can used by with statement.
-    """
     conn = get_connection()
     cur = conn.cursor()
     try:

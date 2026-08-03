@@ -1,6 +1,6 @@
 import os
 import sys
-from db_connection import db_cursor
+from Src.Database.db_connection import db_cursor
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 src_dir = os.path.dirname(current_dir)
@@ -10,7 +10,9 @@ sys.path.append(project_root)
 
 def create_tables():    
     create_query = """
-    CREATE TABLE IF NOT EXISTS earthquakes (
+    DROP TABLE IF EXISTS earthquakes;
+    
+    CREATE TABLE earthquakes (
         id SERIAL PRIMARY KEY,
         magnitude VARCHAR(50),
         depth VARCHAR(50),

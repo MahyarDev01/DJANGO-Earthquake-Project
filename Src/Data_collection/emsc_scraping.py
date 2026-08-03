@@ -1,3 +1,6 @@
+import os
+import platform
+import shutil
 from selenium import webdriver
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
@@ -8,12 +11,56 @@ from selenium.webdriver.firefox.options import Options
 from datetime import date, datetime, timedelta
 from bs4 import BeautifulSoup
 import pandas as pd
-from configs import JAPAN_EMSC_CSV
-
-# run it from project root with: python -m Src.Data_collection.emsc_scraping 
+from configs import JAPAN_EMSC_CSV, FIREFOX_BINARY
 
 
-#filling filters textboxes
+CANDIDATE_PATHS = {
+    "Windows": [
+        r"C:\Program Files\Mozilla Firefox\firefox.exe",
+        r"C:\Program Files (x86)\Mozilla Firefox\firefox.exe",
+    ],
+    "Linux": [
+        "/usr/bin/firefox",
+        "/snap/firefox/current/usr/lib/firefox/firefox",
+        "/usr/lib/firefox/firefox",
+        "/opt/firefox/firefox",
+    ],
+    "Darwin": [
+        "/Applications/Firefox.app/Contents/MacOS/firefox",
+    ],
+}
+
+
+def find_firefox_binary():
+
+    if FIREFOX_BINARY and os.path.exists(FIREFOX_BINARY):
+        return FIREFOX_BINARY
+
+
+    for path in CANDIDATE_PATHS.get(platform.system(), []):
+        if os.path.exists(path):
+            return path
+
+
+    on_path = shutil.which("firefox") or shutil.which("firefox.exe")
+    if on_path:
+        return on_path
+
+
+    return None
+
+
+def build_firefox_options(show_browser=False):
+    options = Options()
+    if not show_browser:
+        options.add_argument("--headless")
+
+    binary_path = find_firefox_binary()
+    if binary_path:
+        options.binary_location = binary_path
+
+    return options
+
 def fill_filters(wait, css_selector, value, clamp_to_max=False):
     element = wait.until(
         EC.presence_of_element_located((By.CSS_SELECTOR, css_selector))
@@ -32,11 +79,7 @@ def fill_filters(wait, css_selector, value, clamp_to_max=False):
 
 def emsc_data_earthquake_scrape(date_start:date, date_end:date, latitude_min:int, latitude_max:int, longitude_min:int, longitude_max:int, magnitude_min:int = 1, magnitude_max:int = None):
 
-    options = Options()
-    options.add_argument("--headless")
-    
-    options.binary_location = "/snap/firefox/current/usr/lib/firefox/firefox"
-        
+    options = options = build_firefox_options(show_browser=False)
     driver = webdriver.Firefox(options=options)
     wait = WebDriverWait(driver, 20)
     url = "https://www.emsc.eu/Earthquake_information/"
@@ -93,20 +136,16 @@ def emsc_data_earthquake_scrape(date_start:date, date_end:date, latitude_min:int
                 })
 
             try:
-                #finding current page
                 current_page = driver.find_element(By.CSS_SELECTOR, "div.pag.selview").text
-                #finding next page button
                 next_btn = driver.find_element(By.CSS_SELECTOR, "div.pag.spes.spes1")
             except NoSuchElementException:
                 break  
 
-            #checking if the page is the last page breaks loop
             if "oldpag" in next_btn.get_attribute("class"):
                 break
 
             next_btn.click()
 
-            #waiting until new page data laoded
             wait.until(
                 lambda d: d.find_element(By.CSS_SELECTOR, "div.pag.selview").text != current_page
             )

@@ -1,14 +1,14 @@
 import pandas as pd
 import os
 import sys
-from configs import JAPAN_EMSC_CSV, JAPAN_GEOFON_CSV, JAPAN_USGS_CSV, JAPAN_DATASET_CSV 
 
 current_dir = os.path.dirname(os.path.abspath(__file__)) 
 src_dir = os.path.dirname(current_dir) 
 project_root = os.path.dirname(src_dir) 
 sys.path.append(project_root) 
 
-from db_connection import get_engine 
+from configs import JAPAN_EMSC_CSV, JAPAN_GEOFON_CSV, JAPAN_USGS_CSV, JAPAN_DATASET_CSV 
+from Src.Database.db_connection import get_engine
 
 def import_data_to_db(): 
     print("Connecting to the database...") 
@@ -26,7 +26,11 @@ def import_data_to_db():
         if os.path.exists(file_path): 
             print(f"Reading raw data from {source_name}...") 
             
-            df = pd.read_csv(file_path)
+            try: 
+                df = pd.read_csv(file_path)
+            except pd.errors.EmptyDataError:
+                print(f"⚠️ File {source_name} is empty. Skipping...")
+                continue
 
             rename_dict = {} 
             if 'date' in df.columns: 
@@ -51,7 +55,7 @@ def import_data_to_db():
             except Exception as e: 
                 print(f"❌ Error loading {source_name}: {e}") 
         else: 
-            print(f"⚠️ File not found: {file_path}. Skipping...") 
+            print(f"⚠️ File not found: {file_path}. Skipping...")
 
 if __name__ == "__main__":
     import_data_to_db()
